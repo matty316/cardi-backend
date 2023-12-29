@@ -48,10 +48,10 @@ enum Commands {
 fn main() {
     let args = CardiCli::parse();
     match args.command {
-        Commands::New { name, craft } => {
-            create_project(&name, &craft);
+        Commands::New { name, craft } => create_project(&name, &craft),
+        Commands::Edit { name, craft, notes, status, progress, current_row } => {
+            edit_project(name, craft, notes, status, progress, current_row)
         }
-        Commands::Edit { .. } => (),
     }
 }
 
@@ -86,4 +86,8 @@ fn craft_enum_from_string(craft: &str) -> Craft {
         "both" => Craft::Both,
         _ => panic!("should not get here"),
     }
+}
+
+fn edit_project(name: &str, craft: &str, notes: &str, status: &str, progress: i32, current_row: i32) {
+
 }
