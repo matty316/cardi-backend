@@ -25,23 +25,26 @@ enum Commands {
 
     #[command(arg_required_else_help = true)]
     Edit {
-        #[arg(short, long)]
+        #[arg(short, long, required=true)]
         name: String,
-        
-        #[arg(short, long)]
-        craft: String,
-        
-        #[arg(short, long)]
-        notes: String,
-        
-        #[arg(short, long)]
-        status: String,
+
+        #[arg(long)]
+        new_name: Option<String>,
 
         #[arg(short, long)]
-        progress: i32,
+        craft: Option<String>,
+        
+        #[arg(long)]
+        notes: Option<String>,
+        
+        #[arg(short, long)]
+        status: Option<String>,
 
         #[arg(short, long)]
-        current_row: i32,
+        progress: Option<i32>,
+
+        #[arg(long)]
+        current_row: Option<i32>,
     }
 }
 
@@ -49,8 +52,8 @@ fn main() {
     let args = CardiCli::parse();
     match args.command {
         Commands::New { name, craft } => create_project(&name, &craft),
-        Commands::Edit { name, craft, notes, status, progress, current_row } => {
-            edit_project(name, craft, notes, status, progress, current_row)
+        Commands::Edit { name, new_name, craft, notes, status, progress, current_row } => {
+            edit_project(&name, new_name, craft, notes, status, progress, current_row)
         }
     }
 }
@@ -88,6 +91,24 @@ fn craft_enum_from_string(craft: &str) -> Craft {
     }
 }
 
-fn edit_project(name: &str, craft: &str, notes: &str, status: &str, progress: i32, current_row: i32) {
+fn edit_project(name: &str, new_name: Option<String>, craft: Option<String>, notes: Option<String>, status: Option<String>, progress: Option<i32>, current_row: Option<i32>) {
+    let mut path = dirs::home_dir().unwrap().into_os_string();
+    let path_string = format!("/.cardi/data/{name}.json");
+    path.push(path_string);
+    let json = fs::read_to_string(path).unwrap();
+    let mut project = serde_json::from_str::<Project>(&json).unwrap();
+    if let Some(n) = new_name {
+        if n != project.name {
+            project.name = n.to_string();
+        }
+    }
 
+    if let Some(c) = craft {
+        if validate_craft(&c) {
+            let c_enum = craft_enum_from_string(&c);
+            project.craft = c_enum;
+        }
+    }
+
+    println!("{project:?}");
 }

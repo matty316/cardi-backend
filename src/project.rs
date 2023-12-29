@@ -3,13 +3,13 @@ use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)] 
 pub struct Project {
-    name: String,
-    craft: Craft,
-    current_row: i32,
-    notes: String,
-    progress: i32,
-    status: Status,
-    started: DateTime<Utc>
+    pub name: String,
+    pub craft: Craft,
+    pub current_row: i32,
+    pub notes: String,
+    pub progress: i32,
+    pub status: Status,
+    pub started: DateTime<Utc>
 }
 
 impl Project {
