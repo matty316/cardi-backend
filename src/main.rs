@@ -106,7 +106,13 @@ fn edit_project(name: &str, new_name: Option<String>, craft: Option<String>, not
     if let Some(c) = craft {
         if validate_craft(&c) {
             let c_enum = craft_enum_from_string(&c);
-            project.craft = c_enum;
+            if c_enum != project.craft { project.craft = c_enum; }
+        }
+    }
+
+    if let Some(n) = notes {
+        if n != project.notes {
+            project.notes = n;
         }
     }
 

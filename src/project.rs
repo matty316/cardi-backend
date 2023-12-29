@@ -26,14 +26,14 @@ impl Project {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)] 
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum Status {
     NotStarted,
     InProgress,
     Finished
 }
 
-#[derive(Debug, Serialize, Deserialize)] 
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub enum Craft {
     Crochet,
     Knitting,
