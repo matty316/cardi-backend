@@ -1,6 +1,6 @@
 mod project;
 
-use crate::project::{Project, Craft};
+use crate::project::{Project, Craft, Status};
 use clap::{Subcommand, Parser};
 use std::fs;
 
@@ -59,12 +59,7 @@ fn main() {
 }
 
 fn create_project(name: &str, craft: &str) {
-     if !validate_craft(craft) {
-         eprintln!("craft can be crochet, knitting or both");
-         std::process::exit(65);
-     }
-
-     let craft_enum = craft_enum_from_string(&craft);
+     let craft_enum = craft_from_string(&craft);
 
      let project = Project::new(name.to_string(), craft_enum);
      let json = serde_json::to_string(&project).unwrap();
@@ -76,18 +71,27 @@ fn create_project(name: &str, craft: &str) {
      fs::write(home_dir.clone(), json).expect("could not save project");
 }
 
-fn validate_craft(craft: &str) -> bool {
-    craft.to_lowercase() == "crochet" ||
-        craft.to_lowercase() == "knitting" ||
-        craft.to_lowercase() == "both"
-}
-
-fn craft_enum_from_string(craft: &str) -> Craft {
+fn craft_from_string(craft: &str) -> Craft {
     match craft.to_lowercase().as_str() {
         "crochet" => Craft::Crochet,
         "knitting" => Craft::Knitting,
         "both" => Craft::Both,
-        _ => panic!("should not get here"),
+        _ => {
+            println!("craft can be crochet, knitting or both");
+            std::process::exit(65);
+        }
+    }
+}
+
+fn status_from_string(status: &str) -> Status {
+    match status.to_lowercase().as_str() {
+        "not-started" => Status::NotStarted,
+        "in-progress" => Status::InProgress,
+        "finished" => Status::Finished,
+        _ => {
+            println!("status can be not-started, in-progress or finished");
+            std::process::exit(65);
+        }
     }
 }
 
@@ -97,23 +101,23 @@ fn edit_project(name: &str, new_name: Option<String>, craft: Option<String>, not
     path.push(path_string);
     let json = fs::read_to_string(path).unwrap();
     let mut project = serde_json::from_str::<Project>(&json).unwrap();
+
     if let Some(n) = new_name {
-        if n != project.name {
-            project.name = n.to_string();
-        }
+        if n != project.name { project.name = n.to_string(); }
     }
 
     if let Some(c) = craft {
-        if validate_craft(&c) {
-            let c_enum = craft_enum_from_string(&c);
-            if c_enum != project.craft { project.craft = c_enum; }
-        }
+        let c_enum = craft_from_string(&c);
+        if c_enum != project.craft { project.craft = c_enum; }
     }
 
     if let Some(n) = notes {
-        if n != project.notes {
-            project.notes = n;
-        }
+        if n != project.notes { project.notes = n; }
+    }
+
+    if let Some(s) = status {
+        let s_enum = status_from_string(&s);
+        if s_enum != project.status { project.status = s_enum }
     }
 
     println!("{project:?}");
