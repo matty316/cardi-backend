@@ -46,6 +46,12 @@ enum Commands {
         #[arg(long)]
         current_row: Option<i32>,
     },
+
+    #[command(arg_required_else_help = true)]
+    Increment {
+        #[arg(short, long, required=true)]
+        name: String,
+    },
 }
 
 fn main() {
@@ -55,6 +61,7 @@ fn main() {
         Commands::Edit { name, new_name, craft, notes, status, progress, current_row } => {
             edit_project(&name, new_name, craft, notes, status, progress, current_row)
         }
+        Commands::Increment { name } => increment_row(&name),
     }
 }
 
@@ -138,6 +145,19 @@ fn edit_project(name: &str,
         if p != project.progress { project.progress = p }
     }
 
+    json = serde_json::to_string(&project).unwrap();
+    fs::write(path.clone(), json.clone()).expect("unable to save project");
+    println!("{json}");
+}
+
+fn increment_row(name: &str) {
+    let mut path = dirs::home_dir().unwrap().into_os_string();
+    let path_string = format!("/.cardi/data/{name}.json");
+    path.push(path_string);
+    let mut json = fs::read_to_string(path.clone()).unwrap();
+    let mut project = serde_json::from_str::<Project>(&json).unwrap();
+
+    project.current_row += 1;
     json = serde_json::to_string(&project).unwrap();
     fs::write(path.clone(), json.clone()).expect("unable to save project");
     println!("{json}");
