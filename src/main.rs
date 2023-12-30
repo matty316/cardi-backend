@@ -95,7 +95,13 @@ fn status_from_string(status: &str) -> Status {
     }
 }
 
-fn edit_project(name: &str, new_name: Option<String>, craft: Option<String>, notes: Option<String>, status: Option<String>, progress: Option<i32>, current_row: Option<i32>) {
+fn edit_project(name: &str,
+                new_name: Option<String>,
+                craft: Option<String>,
+                notes: Option<String>,
+                status: Option<String>,
+                progress: Option<i32>,
+                current_row: Option<i32>) {
     let mut path = dirs::home_dir().unwrap().into_os_string();
     let path_string = format!("/.cardi/data/{name}.json");
     path.push(path_string);
@@ -118,6 +124,18 @@ fn edit_project(name: &str, new_name: Option<String>, craft: Option<String>, not
     if let Some(s) = status {
         let s_enum = status_from_string(&s);
         if s_enum != project.status { project.status = s_enum }
+    }
+
+    if let Some(r) = current_row {
+        if r != project.current_row { project.current_row = r }
+    }
+
+    if let Some(p) = progress {
+        if p < 0 || p > 100 {
+            println!("progress can be between 0 and 100");
+            std::process::exit(65);
+        }
+        if p != project.progress { project.progress = p }
     }
 
     println!("{project:?}");
