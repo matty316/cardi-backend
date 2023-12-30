@@ -3,6 +3,7 @@ mod project;
 use crate::project::{Project, Craft, Status};
 use clap::{Subcommand, Parser};
 use std::fs;
+use std::ffi::OsString;
 
 #[derive(Parser, Debug)]
 #[command(name="cardi")]
@@ -52,6 +53,12 @@ enum Commands {
         #[arg(short, long, required=true)]
         name: String,
     },
+
+    #[command(arg_required_else_help = false)]
+    View {
+        #[arg(short, long)]
+        name: Option<String>,
+    },
 }
 
 fn main() {
@@ -62,7 +69,28 @@ fn main() {
             edit_project(&name, new_name, craft, notes, status, progress, current_row)
         }
         Commands::Increment { name } => increment_row(&name),
+        Commands::View { name } => view(name),
     }
+}
+
+fn get_path(name: &str) -> OsString {
+    let mut path = dirs::home_dir().unwrap().into_os_string();
+    let path_string = format!("/.cardi/data/{name}.json");
+    path.push(path_string);
+    path
+}
+
+fn fetch(name: &str) -> Project {
+    let path = get_path(name);
+    let json = fs::read_to_string(path.clone()).unwrap();
+    serde_json::from_str::<Project>(&json).unwrap()
+}
+
+fn save(name: &str, project: Project) {
+    let path = get_path(name);
+    let json = serde_json::to_string(&project).unwrap();
+    fs::write(path.clone(), json.clone()).expect("unable to save project");
+    println!("{project:?}");
 }
 
 fn create_project(name: &str, craft: &str) {
@@ -109,12 +137,7 @@ fn edit_project(name: &str,
                 status: Option<String>,
                 progress: Option<i32>,
                 current_row: Option<i32>) {
-    let mut path = dirs::home_dir().unwrap().into_os_string();
-    let path_string = format!("/.cardi/data/{name}.json");
-    path.push(path_string);
-    let mut json = fs::read_to_string(path.clone()).unwrap();
-    let mut project = serde_json::from_str::<Project>(&json).unwrap();
-
+    let mut project = fetch(name);
     if let Some(n) = new_name {
         if n != project.name { project.name = n.to_string(); }
     }
@@ -145,20 +168,28 @@ fn edit_project(name: &str,
         if p != project.progress { project.progress = p }
     }
 
-    json = serde_json::to_string(&project).unwrap();
-    fs::write(path.clone(), json.clone()).expect("unable to save project");
-    println!("{json}");
+    save(name, project);
 }
 
 fn increment_row(name: &str) {
-    let mut path = dirs::home_dir().unwrap().into_os_string();
-    let path_string = format!("/.cardi/data/{name}.json");
-    path.push(path_string);
-    let mut json = fs::read_to_string(path.clone()).unwrap();
-    let mut project = serde_json::from_str::<Project>(&json).unwrap();
-
+    let mut project = fetch(name);
     project.current_row += 1;
-    json = serde_json::to_string(&project).unwrap();
-    fs::write(path.clone(), json.clone()).expect("unable to save project");
-    println!("{json}");
+    save(name, project);
+}
+
+fn view(name: Option<String>) {
+    if let Some(n) = name {
+        let project = fetch(&n);
+        println!("{project:?}");
+    } else {
+        let mut path = dirs::home_dir().unwrap().into_os_string();
+        path.push("/.cardi/data");
+        let dir = fs::read_dir(path).expect("cannot access data folder");
+
+        for path in dir {
+            let json = fs::read_to_string(path.unwrap().path().into_os_string()).unwrap();
+            let project = serde_json::from_str::<Project>(&json).unwrap();
+            println!("{project:?}");
+        }
+    }
 }
