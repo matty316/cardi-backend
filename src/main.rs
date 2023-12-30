@@ -45,7 +45,7 @@ enum Commands {
 
         #[arg(long)]
         current_row: Option<i32>,
-    }
+    },
 }
 
 fn main() {
@@ -105,7 +105,7 @@ fn edit_project(name: &str,
     let mut path = dirs::home_dir().unwrap().into_os_string();
     let path_string = format!("/.cardi/data/{name}.json");
     path.push(path_string);
-    let json = fs::read_to_string(path).unwrap();
+    let mut json = fs::read_to_string(path.clone()).unwrap();
     let mut project = serde_json::from_str::<Project>(&json).unwrap();
 
     if let Some(n) = new_name {
@@ -138,5 +138,7 @@ fn edit_project(name: &str,
         if p != project.progress { project.progress = p }
     }
 
-    println!("{project:?}");
+    json = serde_json::to_string(&project).unwrap();
+    fs::write(path.clone(), json.clone()).expect("unable to save project");
+    println!("{json}");
 }
